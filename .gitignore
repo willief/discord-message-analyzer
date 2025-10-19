@@ -1,0 +1,132 @@
+# Discord Message Analyzer .gitignore
+# This file tells Git to ignore sensitive and user-specific files
+
+# === CRITICAL: SENSITIVE DATA ===
+# Never commit these files - they contain secrets!
+config.yaml
+config.yml
+*.token
+.env
+.env.local
+
+# Discord exports contain private messages - never commit these
+discord_exports/
+exports/
+*_exports/
+*.json
+
+# Generated reports may contain private information
+*_report.txt
+*_analysis.txt
+reports/
+output/
+
+# === PYTHON ===
+# Python virtual environments
+venv/
+env/
+ENV/
+.venv
+whisper_env/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Distribution / packaging
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# === EDITORS / IDEs ===
+# VS Code
+.vscode/
+*.code-workspace
+
+# PyCharm
+.idea/
+*.iml
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+.\#*
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# === OPERATING SYSTEMS ===
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Linux
+.directory
+.Trash-*
+
+# Windows
+Thumbs.db
+edb.log
+*.stackdump
+Desktop.ini
+
+# === PROJECT SPECIFIC ===
+# Temporary files
+temp/
+tmp/
+*.tmp
+
+# Backup files
+*.bak
+*.backup
+
+# Logs
+*.log
+logs/
+
+# Database files (if you extend the project later)
+*.db
+*.sqlite
+*.sqlite3
+
+# Any file ending in _private or _secret
+*_private.*
+*_secret.*

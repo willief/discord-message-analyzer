@@ -1,0 +1,35 @@
+# Discord Message Analyzer - Example Configuration
+# 
+# Copy this file to 'config.yaml' and fill in your specific values.
+# IMPORTANT: Never commit your actual config.yaml file with real values!
+# The .gitignore file prevents config.yaml from being committed.
+
+# Target User Configuration
+# The Discord username to search for in exports
+# IMPORTANT: Use the exact username including any periods or special characters
+# This is the account username, not the display name or nickname
+# Example: "dirvine." or "username"
+target_username: "your_username_here"
+
+# Optional: Discriminator for old-style Discord usernames (e.g., "1234")
+# Set to null for new-style usernames without discriminators
+# Example: "1234" or null
+target_discriminator: null
+
+# Export Directory Configuration
+# Path to the directory containing JSON exports from DiscordChatExporter
+# Can be absolute (/home/user/exports) or relative (./discord_exports)
+# Example: "./discord_exports" or "/home/user/discord-data/exports"
+exports_directory: "./discord_exports"
+
+# Output Configuration
+# Where to save the generated analysis report
+# Example: "analysis_report.txt" or "./reports/user_analysis.txt"
+output_report: "discord_analysis_report.txt"
+
+# Optional: Date Filtering (not yet implemented in v1.0)
+# Future feature: Analyze only messages within a specific timeframe
+# Leave as null to analyze all messages in the exports
+date_filter:
+  start_date: null  # Format: "YYYY-MM-DD" e.g., "2025-04-18"
+  end_date: null    # Format: "YYYY-MM-DD" e.g., "2025-10-18"

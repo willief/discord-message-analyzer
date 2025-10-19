@@ -1,0 +1,5 @@
+# Discord Message Analyzer - Python Dependencies
+# Install with: pip install -r requirements.txt
+
+# YAML configuration file parsing
+PyYAML>=6.0.1
