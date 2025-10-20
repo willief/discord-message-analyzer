@@ -204,6 +204,7 @@ This organization makes it easy to follow conversation threads and understand th
 
 A typical project directory looks like this:
 
+
 ```
 your-project/
 ├── discord_analyzer.py          # Main analysis script

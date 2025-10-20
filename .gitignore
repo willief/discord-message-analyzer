@@ -8,6 +8,8 @@ config.yml
 *.token
 .env
 .env.local
+discord_bot.info
+
 
 # Discord exports contain private messages - never commit these
 discord_exports/

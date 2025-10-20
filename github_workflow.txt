@@ -1,0 +1,88 @@
+name: Generate Dirvine Digests
+
+on:
+  # Run every Sunday at 22:00 UTC
+  schedule:
+    - cron: '0 22 * * 0'
+  
+  # Allow manual triggering for testing
+  workflow_dispatch:
+
+jobs:
+  generate-digests:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install Python dependencies
+        run: |
+          pip install PyYAML
+      
+      - name: Download DiscordChatExporter
+        run: |
+          wget https://github.com/Tyrrrz/DiscordChatExporter/releases/latest/download/DiscordChatExporter.Cli.linux-x64.zip
+          unzip DiscordChatExporter.Cli.linux-x64.zip -d discord-exporter
+          chmod +x discord-exporter/DiscordChatExporter.Cli
+      
+      - name: Create exports directory
+        run: mkdir -p discord_exports
+      
+      - name: Export general-chat
+        env:
+          DISCORD_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+        run: |
+          ./discord-exporter/DiscordChatExporter.Cli export \
+            -t "$DISCORD_TOKEN" \
+            -c 1209059622586163272 \
+            -f Json \
+            -o "discord_exports/general-chat.json"
+      
+      - name: Export general-support
+        env:
+          DISCORD_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+        run: |
+          ./discord-exporter/DiscordChatExporter.Cli export \
+            -t "$DISCORD_TOKEN" \
+            -c 1247881515107483759 \
+            -f Json \
+            -o "discord_exports/general-support.json"
+      
+      - name: Export bug-reports
+        env:
+          DISCORD_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+        run: |
+          ./discord-exporter/DiscordChatExporter.Cli export \
+            -t "$DISCORD_TOKEN" \
+            -c 1290643554267566130 \
+            -f Json \
+            -o "discord_exports/bug-reports.json"
+      
+      - name: Generate markdown digests
+        run: |
+          python3 dirvine_digest.py --exports discord_exports
+      
+      - name: Upload digests as artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: dirvine-digests-${{ github.run_number }}
+          path: |
+            dirvine_complete_archive.md
+            dirvine_weekly_digest.md
+          retention-days: 90
+      
+      - name: Summary
+        run: |
+          echo "## Digest Generation Complete! 🎉" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Generated files:" >> $GITHUB_STEP_SUMMARY
+          echo "- dirvine_complete_archive.md" >> $GITHUB_STEP_SUMMARY
+          echo "- dirvine_weekly_digest.md" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Download artifacts from the Actions tab." >> $GITHUB_STEP_SUMMARY
