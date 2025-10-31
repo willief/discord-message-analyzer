@@ -1,0 +1,19 @@
+# Discord Message Analyzer - Example Configuration
+# Copy this to 'config.yaml' and fill in your values
+# NEVER commit config.yaml - it contains secrets!
+
+# Target Discord username to analyze
+target_username: "dirvine."
+
+# Path to Discord exports directory
+exports_directory: "./digests/discord_exports"
+
+# Output file paths
+archive_output: "user_complete_archive.md"
+weekly_output: "user_weekly_digest.md"
+json_output: "user_digest.json"
+
+# Date filtering (future feature)
+date_filter:
+  start_date: "2024-02-01"
+  end_date: null

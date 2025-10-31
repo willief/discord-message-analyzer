@@ -1,0 +1,65 @@
+# Discord Message Analyzer .gitignore
+# This file tells Git to ignore sensitive and user-specific files
+
+# === CRITICAL: SENSITIVE DATA ===
+config.yaml
+config.yml
+*.token
+.env
+.env.local
+
+# Discord exports contain private messages
+discord_exports/
+exports/
+*_exports/
+*.json
+
+# Generated reports may contain private information
+*_report.txt
+*_analysis.txt
+reports/
+output/
+
+# === PYTHON ===
+venv/
+env/
+ENV/
+.venv
+whisper_env/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+
+# === TEST OUTPUTS ===
+tests/output/
+
+# === EDITORS / IDEs ===
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# === OPERATING SYSTEMS ===
+.DS_Store
+Thumbs.db
+
+# === LOGS ===
+*.log
+logs/
+digests/*.log
+
+# === TEMPORARY ===
+temp/
+tmp/
+*.tmp
+*.bak
+*.backup
+
+# Any file ending in _private or _secret
+*_private.*
+*_secret.*
+
