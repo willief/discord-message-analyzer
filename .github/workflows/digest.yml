@@ -21,7 +21,7 @@ jobs:
       - name: Download DiscordChatExporter
         run: |
           wget https://github.com/Tyrrrz/DiscordChatExporter/releases/latest/download/DiscordChatExporter.Cli.linux-x64.zip
-          unzip DiscordChatExporter.Cli.linux-x64.zip -d discord-exporter
+          unzip -o DiscordChatExporter.Cli.linux-x64.zip -d discord-exporter
           chmod +x discord-exporter/DiscordChatExporter.Cli
 
       - name: Create exports directory
