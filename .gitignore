@@ -63,3 +63,17 @@ tmp/
 *_private.*
 *_secret.*
 
+
+# === ALLOW DIGEST OUTPUTS ===
+!dirvine_complete_archive.html
+!dirvine_complete_archive.md
+!dirvine_digest.json
+!dirvine_weekly_digest.md
+!forthebux_complete_archive.html
+!forthebux_complete_archive.md
+!forthebux_digest.json
+!forthebux_weekly_digest.md
+!jimcollinson_complete_archive.html
+!jimcollinson_complete_archive.md
+!jimcollinson_digest.json
+!jimcollinson_weekly_digest.md
