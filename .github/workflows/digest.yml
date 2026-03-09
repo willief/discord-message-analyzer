@@ -40,7 +40,6 @@ jobs:
             -c 1209059622586163272 \
             -f Json \
             --after "$AFTER_DATE" \
-            --rate-limit 1 \
             -o "discord_exports/general-chat.json"
 
       - name: Export general-support
@@ -52,7 +51,6 @@ jobs:
             -c 1247881515107483759 \
             -f Json \
             --after "$AFTER_DATE" \
-            --rate-limit 1 \
             -o "discord_exports/general-support.json"
 
       - name: Export bug-reports
@@ -64,7 +62,6 @@ jobs:
             -c 1290643554267566130 \
             -f Json \
             --after "$AFTER_DATE" \
-            --rate-limit 1 \
             -o "discord_exports/bug-reports.json"
 
       - name: Export discussion-topics
@@ -76,7 +73,6 @@ jobs:
             -c 1315677640581054464 \
             -f Json \
             --after "$AFTER_DATE" \
-            --rate-limit 1 \
             -o "discord_exports/discussion-topics.json"
 
       - name: Export token-chat
@@ -88,7 +84,6 @@ jobs:
             -c 1437463416334712994 \
             -f Json \
             --after "$AFTER_DATE" \
-            --rate-limit 1 \
             -o "discord_exports/token-chat.json"
 
       - name: Generate digest for dirvine.
