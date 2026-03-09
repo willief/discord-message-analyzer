@@ -67,6 +67,30 @@ jobs:
             --rate-limit 1 \
             -o "discord_exports/bug-reports.json"
 
+      - name: Export discussion-topics
+        env:
+          DISCORD_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+        run: |
+          ./discord-exporter/DiscordChatExporter.Cli export \
+            -t "$DISCORD_TOKEN" \
+            -c 1315677640581054464 \
+            -f Json \
+            --after "$AFTER_DATE" \
+            --rate-limit 1 \
+            -o "discord_exports/discussion-topics.json"
+
+      - name: Export token-chat
+        env:
+          DISCORD_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+        run: |
+          ./discord-exporter/DiscordChatExporter.Cli export \
+            -t "$DISCORD_TOKEN" \
+            -c 1437463416334712994 \
+            -f Json \
+            --after "$AFTER_DATE" \
+            --rate-limit 1 \
+            -o "discord_exports/token-chat.json"
+
       - name: Generate digest for dirvine.
         run: |
           python3 discord_digest_enhanced.py \
