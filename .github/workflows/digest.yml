@@ -117,10 +117,11 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -f \
-            dirvine_weekly_digest.md \
-            forthebux_weekly_digest.md \
-            jimcollinson_weekly_digest.md
+
+          for f in dirvine_weekly_digest.md forthebux_weekly_digest.md jimcollinson_weekly_digest.md; do
+            [ -f "$f" ] && git add -f "$f"
+          done
+
           git diff --staged --quiet || git commit -m "Update weekly digests for week ending $(date '+%Y-%m-%d')"
           git push
 
