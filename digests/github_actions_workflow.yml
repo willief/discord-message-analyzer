@@ -1,0 +1,99 @@
+name: Generate Discord Digests
+
+on:
+  schedule:
+    # Run every Sunday at 22:00 UTC
+    - cron: '0 22 * * 0'
+  
+  # Allow manual triggering
+  workflow_dispatch:
+
+jobs:
+  generate-digests:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Download DiscordChatExporter
+        run: |
+          wget -q https://github.com/Tyrrrz/DiscordChatExporter/releases/latest/download/DiscordChatExporter.Cli.linux-x64.zip
+          unzip -q DiscordChatExporter.Cli.linux-x64.zip -d discord-exporter
+          chmod +x discord-exporter/DiscordChatExporter.Cli
+      
+      - name: Create exports directory
+        run: mkdir -p discord_exports
+      
+      - name: Export general-chat
+        env:
+          DISCORD_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+        run: |
+          ./discord-exporter/DiscordChatExporter.Cli export \
+            -t "$DISCORD_TOKEN" \
+            -c 1209059622586163272 \
+            -f Json \
+            -o "discord_exports/general-chat.json"
+      
+      - name: Export general-support
+        env:
+          DISCORD_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+        run: |
+          ./discord-exporter/DiscordChatExporter.Cli export \
+            -t "$DISCORD_TOKEN" \
+            -c 1247881515107483759 \
+            -f Json \
+            -o "discord_exports/general-support.json"
+      
+      - name: Export bug-reports
+        env:
+          DISCORD_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+        run: |
+          ./discord-exporter/DiscordChatExporter.Cli export \
+            -t "$DISCORD_TOKEN" \
+            -c 1290643554267566130 \
+            -f Json \
+            -o "discord_exports/bug-reports.json"
+      
+      - name: Export hot-topics
+        env:
+          DISCORD_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+        run: |
+          ./discord-exporter/DiscordChatExporter.Cli export \
+            -t "$DISCORD_TOKEN" \
+            -c CHANNEL_ID_HERE \
+            -f Json \
+            -o "discord_exports/hot-topics.json" || true
+      
+      - name: Generate digests for all users
+        run: |
+          chmod +x generate_all_digests.sh
+          ./generate_all_digests.sh discord_exports outputs
+      
+      - name: Upload digests as artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: discord-digests-${{ github.run_number }}
+          path: outputs/
+          retention-days: 90
+      
+      - name: Create summary
+        run: |
+          echo "## 📊 Discord Digest Generation Complete!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Generated files for:" >> $GITHUB_STEP_SUMMARY
+          echo "- dirvine." >> $GITHUB_STEP_SUMMARY
+          echo "- forthebux" >> $GITHUB_STEP_SUMMARY
+          echo "- JimCollinson" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Each user has complete archive, weekly, and fortnightly summaries in:" >> $GITHUB_STEP_SUMMARY
+          echo "- Markdown (.md)" >> $GITHUB_STEP_SUMMARY
+          echo "- HTML (.html)" >> $GITHUB_STEP_SUMMARY
+          echo "- JSON (.json)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📥 Download artifacts from the Actions tab." >> $GITHUB_STEP_SUMMARY

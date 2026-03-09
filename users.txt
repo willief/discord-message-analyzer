@@ -1,0 +1,11 @@
+# Discord Users to Track
+# One username per line
+# Lines starting with # are comments
+# Empty lines are ignored
+
+dirvine.
+forthebux
+JimCollinson
+# Add more users below:
+# someuser
+# anotheruser

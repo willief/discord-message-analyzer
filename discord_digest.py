@@ -10,14 +10,17 @@ import argparse
 from datetime import datetime, timedelta
 from collections import defaultdict
 from pathlib import Path
+from html_generator import HTMLDigestGenerator
 
 
 class DiscordUserDigestGenerator:
     """Generate markdown digests of a Discord user's activity"""
 
-    def __init__(self, target_username, exports_directory):
+    def __init__(self, target_username, exports_directory, date_from=None, date_to=None):
         self.target_username = target_username.lower()
         self.exports_directory = exports_directory
+        self.date_from = date_from
+        self.date_to = date_to
 
         # Store messages organized by date
         self.messages_by_date = defaultdict(list)
@@ -53,7 +56,13 @@ class DiscordUserDigestGenerator:
         target_user_message_ids = set()
         for msg in messages:
             author = msg.get('author', {})
-            if author.get('name', '').lower() == self.target_username:
+            # Handle both string and dict author formats
+            if isinstance(author, str):
+                author_name = author.lower()
+            else:
+                author_name = author.get('name', '').lower()
+            
+            if author_name == self.target_username:
                 target_user_message_ids.add(msg.get('id'))
 
         # Collect target user's posts and replies to them
@@ -66,9 +75,22 @@ class DiscordUserDigestGenerator:
             except:
                 continue
 
+            # Apply date range filtering if specified
+            if self.date_from:
+                date_from_obj = datetime.fromisoformat(self.date_from.replace('Z', '+00:00'))
+                if dt < date_from_obj:
+                    continue
+            
+            if self.date_to:
+                date_to_obj = datetime.fromisoformat(self.date_to.replace('Z', '+00:00'))
+                if dt > date_to_obj:
+                    continue
+
             # Check if this is target user's post
-            is_target_user = author.get(
-                'name', '').lower() == self.target_username
+            if isinstance(author, str):
+                is_target_user = author.lower() == self.target_username
+            else:
+                is_target_user = author.get('name', '').lower() == self.target_username
 
             # Check if this is a reply to target user
             is_reply_to_target_user = False
@@ -79,19 +101,47 @@ class DiscordUserDigestGenerator:
                     is_reply_to_target_user = True
                     replied_to_msg = next(
                         (m for m in messages if m.get('id') == ref_id), None)
+                # Add guild and channel IDs for URL construction
+                if replied_to_msg:
+                    replied_to_msg = replied_to_msg.copy()
+                    replied_to_msg['guild_id'] = data.get(
+                        'guild', {}).get('id')
+                    replied_to_msg['channel_id'] = data.get(
+                        'channel', {}).get('id')
+                    print(
+                        f"DEBUG: Guild ID: {replied_to_msg.get('guild_id')}, Channel ID: {replied_to_msg.get('channel_id')}, Msg ID: {replied_to_msg.get('id')}")
 
             if is_target_user or is_reply_to_target_user:
+                # Check if message is within date range
+                if self.date_from or self.date_to:
+                    if self.date_from:
+                        try:
+                            date_from_obj = datetime.fromisoformat(self.date_from.replace('Z', '+00:00'))
+                            if dt < date_from_obj:
+                                continue  # Skip messages before start date
+                        except ValueError:
+                            pass  # Invalid date format, process anyway
+                    
+                    if self.date_to:
+                        try:
+                            date_to_obj = datetime.fromisoformat(self.date_to.replace('Z', '+00:00'))
+                            if dt > date_to_obj:
+                                continue  # Skip messages after end date
+                        except ValueError:
+                            pass  # Invalid date format, process anyway
+                
                 entry = {
                     'datetime': dt,
                     'date': dt.date(),
                     'time': dt.strftime('%H:%M:%S'),
                     'channel': channel_name,
                     'server': guild_name,
-                    'author': f"{author.get('name')}",
+                    'author': author if isinstance(author, str) else author.get('name', 'Unknown'),
                     'content': msg.get('content', ''),
                     'is_target_user': is_target_user,
                     'is_reply_to_target_user': is_reply_to_target_user,
                     'replied_to_msg': replied_to_msg,
+                    'reactions': msg.get('reactions', []),
                     'message_url': f"https://discord.com/channels/{data.get('guild', {}).get('id')}/{data.get('channel', {}).get('id')}/{msg.get('id')}"
                 }
 
@@ -125,7 +175,7 @@ class DiscordUserDigestGenerator:
 
                 self._write_message(f, msg)
 
-        print(f"✓ Complete archive generated: {output_file}")
+        print(f"âœ“ Complete archive generated: {output_file}")
         print(f"  Total messages: {len(sorted_messages)}")
 
     def generate_json_digest(self, output_file='user_digest.json'):
@@ -183,7 +233,7 @@ class DiscordUserDigestGenerator:
         with open(output_file, 'w', encoding='utf-8') as f:
             json.dump(digest, f, indent=2, ensure_ascii=False)
 
-        print(f"✓ JSON digest generated: {output_file}")
+        print(f"âœ“ JSON digest generated: {output_file}")
         print(f"  Total messages: {len(sorted_messages)}")
 
     def generate_weekly_digest(self, output_file='user_weekly_digest.md', days=7):
@@ -220,11 +270,11 @@ class DiscordUserDigestGenerator:
 
                 self._write_message(f, msg)
 
-        print(f"✓ Weekly digest generated: {output_file}")
+        print(f"âœ“ Weekly digest generated: {output_file}")
         print(f"  Messages this week: {len(recent_messages)}")
 
     def _write_message(self, f, msg):
-        """Write a single message entry to markdown"""
+        """Write a single message entry to markdown with truncated quotes"""
         f.write(f"**[#{msg['channel']}]** ")
         f.write(f"`{msg['time']}` ")
 
@@ -236,86 +286,31 @@ class DiscordUserDigestGenerator:
                 replied_author = replied_to.get(
                     'author', {}).get('name', 'Unknown')
                 replied_content = replied_to.get('content', '')
+
+                # Truncate long quotes to 100 characters
+                if len(replied_content) > 100:
+                    replied_content = replied_content[:100] + "... [truncated]"
+
                 f.write(f"> *Replying to {replied_author}:*\n")
                 f.write(f"> {replied_content}\n\n")
 
             f.write(f"{msg['content']}\n\n")
 
-        elif msg['is_reply_to_target_user']:  # ← Fixed this line
+        elif msg['is_reply_to_target_user']:
             f.write(
                 f"**{msg['author']}** replied to {self.target_username}:\n\n")
 
             if msg['replied_to_msg']:
                 target_content = msg['replied_to_msg'].get('content', '')
+
+                # Truncate long quotes to 100 characters
+                if len(target_content) > 100:
+                    target_content = target_content[:100] + "... [truncated]"
+
                 f.write(f"> *{self.target_username} said:*\n")
                 f.write(f"> {target_content}\n\n")
 
             f.write(f"{msg['content']}\n\n")
-
-        f.write(f"[View in Discord]({msg['message_url']})\n\n")
-        f.write("---\n\n")
-
-        """Write a single message entry to markdown with improved thread formatting"""
-
-        # Determine interaction type for visual grouping
-        if msg['is_target_user']:
-            # User's own posts - most prominent
-            f.write(f"\n### 💬 {self.target_username} posted\n\n")
-            f.write(f"**[#{msg['channel']}]** `{msg['time']}`\n\n")
-
-            if msg['replied_to_msg']:
-                replied_to = msg['replied_to_msg']
-                replied_author = replied_to.get(
-                    'author', {}).get('name', 'Unknown')
-                replied_content = replied_to.get('content', '')
-                f.write(f"↳ *Replying to **{replied_author}**:*\n")
-                f.write(f"> {replied_content}\n\n")
-
-            f.write(f"**{msg['author']}**: {msg['content']}\n\n")
-
-        elif msg['is_reply_to_target_user']:
-            # Replies to the user - show context
-            f.write(f"\n### 💭 Reply to {self.target_username}\n\n")
-            f.write(f"**[#{msg['channel']}]** `{msg['time']}`\n\n")
-
-            if msg['replied_to_msg']:
-                target_content = msg['replied_to_msg'].get('content', '')
-                f.write(f"↳ *{self.target_username} said:*\n")
-                f.write(f"> {target_content}\n\n")
-
-            f.write(f"**{msg['author']}**: {msg['content']}\n\n")
-
-        elif msg['target_user_reacted']:
-            # Reactions - compact format
-            reactions_str = " ".join(msg['target_user_reactions'])
-            f.write(
-                f"\n### ❤️ {self.target_username} reacted: {reactions_str}\n\n")
-            f.write(f"**[#{msg['channel']}]** `{msg['time']}`\n\n")
-            f.write(f"**{msg['author']}**: {msg['content']}\n\n")
-
-        elif msg['target_user_replied_to_this']:
-            # Messages the user replied to - show full thread
-            f.write(f"\n### 🔗 Thread: {self.target_username} replied\n\n")
-            f.write(f"**[#{msg['channel']}]** `{msg['time']}`\n\n")
-
-            # Original message
-            f.write(f"**{msg['author']}** said:\n")
-            f.write(f"> {msg['content']}\n\n")
-
-            # User's reply
-            if msg['target_user_reply']:
-                reply_content = msg['target_user_reply'].get('content', '')
-                reply_timestamp = msg['target_user_reply'].get('timestamp', '')
-                try:
-                    reply_dt = datetime.fromisoformat(
-                        reply_timestamp.replace('Z', '+00:00'))
-                    reply_time = reply_dt.strftime('%H:%M:%S')
-                except:
-                    reply_time = "unknown time"
-
-                f.write(
-                    f"↳ **{self.target_username}** replied at `{reply_time}`:\n")
-                f.write(f"> {reply_content}\n\n")
 
         f.write(f"[View in Discord]({msg['message_url']})\n\n")
         f.write("---\n\n")
@@ -337,8 +332,12 @@ def main():
                         help='Output file for weekly digest')
     parser.add_argument('--json-output', default='user_digest.json',
                         help='Output file for JSON digest')
-    parser.add_argument('--days', type=int, default=7,
-                        help='Number of days for weekly digest (default: 7)')
+    parser.add_argument('--days', type=int, default=14,
+                        help='Number of days for weekly digest (default: 14 - fortnightly)')
+    parser.add_argument('--date-from', type=str, default=None,
+                        help='Start date for filtering (ISO format: YYYY-MM-DDTHH:MM:SSZ)')
+    parser.add_argument('--date-to', type=str, default=None,
+                        help='End date for filtering (ISO format: YYYY-MM-DDTHH:MM:SSZ)')
     parser.add_argument('--archive-only', action='store_true',
                         help='Generate only the complete archive')
     parser.add_argument('--weekly-only', action='store_true',
@@ -352,16 +351,28 @@ def main():
     print("Discord User Digest Generator")
     print("=" * 80)
     print(f"Target user: {args.username}")
-    print(f"Processing exports from: {args.exports}\n")
+    print(f"Processing exports from: {args.exports}")
+    if args.date_from or args.date_to:
+        print(f"Date range: {args.date_from or 'start'} to {args.date_to or 'end'}\n")
+    else:
+        print()
 
-    generator = DiscordUserDigestGenerator(args.username, args.exports)
+    generator = DiscordUserDigestGenerator(
+        args.username, 
+        args.exports,
+        date_from=args.date_from,
+        date_to=args.date_to
+    )
     generator.process_exports()
 
     if not args.weekly_only:
         generator.generate_complete_archive(args.archive_output)
+        # Generate HTML version using separate module
+        html_output = args.archive_output.replace('.md', '.html')
+        html_gen = HTMLDigestGenerator(args.username)
+        html_gen.generate_html_archive(generator.all_messages, html_output)
 
-    if not args.archive_only:
-        generator.generate_weekly_digest(args.weekly_output, args.days)
+    generator.generate_weekly_digest(args.weekly_output, args.days)
 
     if not args.no_json:
         generator.generate_json_digest(args.json_output)
