@@ -23,7 +23,7 @@ jobs:
           wget https://github.com/Tyrrrz/DiscordChatExporter/releases/latest/download/DiscordChatExporter.Cli.linux-x64.zip
           python3 -c "import zipfile; zipfile.ZipFile('DiscordChatExporter.Cli.linux-x64.zip').extractall('discord-exporter')"
           chmod +x discord-exporter/DiscordChatExporter.Cli
-          
+
       - name: Create exports directory
         run: mkdir -p discord_exports
 
@@ -57,6 +57,26 @@ jobs:
             -f Json \
             -o "discord_exports/bug-reports.json"
 
+      - name: Export discussion-topics
+        env:
+          DISCORD_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+        run: |
+          ./discord-exporter/DiscordChatExporter.Cli export \
+            -t "$DISCORD_TOKEN" \
+            -c 1315677640581054464 \
+            -f Json \
+            -o "discord_exports/discussion-topics.json"
+
+      - name: Export token-chat
+        env:
+          DISCORD_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+        run: |
+          ./discord-exporter/DiscordChatExporter.Cli export \
+            -t "$DISCORD_TOKEN" \
+            -c  1437463416334712994\
+            -f Json \
+            -o "discord_exports/token-chat.json"
+            
       - name: Generate digests
         run: |
           python3 discord_digest_enhanced.py \
