@@ -24,6 +24,10 @@ jobs:
           python3 -c "import zipfile; zipfile.ZipFile('DiscordChatExporter.Cli.linux-x64.zip').extractall('discord-exporter')"
           chmod +x discord-exporter/DiscordChatExporter.Cli
 
+      - name: Set date range
+        run: |
+          echo "AFTER_DATE=$(date -d '8 days ago' '+%Y-%m-%d')" >> $GITHUB_ENV
+
       - name: Create exports directory
         run: mkdir -p discord_exports
 
@@ -35,6 +39,8 @@ jobs:
             -t "$DISCORD_TOKEN" \
             -c 1209059622586163272 \
             -f Json \
+            --after "$AFTER_DATE" \
+            --rate-limit 1 \
             -o "discord_exports/general-chat.json"
 
       - name: Export general-support
@@ -45,6 +51,8 @@ jobs:
             -t "$DISCORD_TOKEN" \
             -c 1247881515107483759 \
             -f Json \
+            --after "$AFTER_DATE" \
+            --rate-limit 1 \
             -o "discord_exports/general-support.json"
 
       - name: Export bug-reports
@@ -55,45 +63,54 @@ jobs:
             -t "$DISCORD_TOKEN" \
             -c 1290643554267566130 \
             -f Json \
+            --after "$AFTER_DATE" \
+            --rate-limit 1 \
             -o "discord_exports/bug-reports.json"
 
-      - name: Export discussion-topics
-        env:
-          DISCORD_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
-        run: |
-          ./discord-exporter/DiscordChatExporter.Cli export \
-            -t "$DISCORD_TOKEN" \
-            -c 1315677640581054464 \
-            -f Json \
-            -o "discord_exports/discussion-topics.json"
-
-      - name: Export token-chat
-        env:
-          DISCORD_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
-        run: |
-          ./discord-exporter/DiscordChatExporter.Cli export \
-            -t "$DISCORD_TOKEN" \
-            -c  1437463416334712994\
-            -f Json \
-            -o "discord_exports/token-chat.json"
-            
-      - name: Generate digests
+      - name: Generate digest for dirvine.
         run: |
           python3 discord_digest_enhanced.py \
             --exports discord_exports \
             --username "dirvine." \
-            --archive-output dirvine_complete_archive.md \
-            --html-output dirvine_complete_archive.html \
-            --json-output dirvine_digest.json \
+            --weekly-only \
+            --days 8 \
             --weekly-output dirvine_weekly_digest.md
+
+      - name: Generate digest for forthebux
+        run: |
+          python3 discord_digest_enhanced.py \
+            --exports discord_exports \
+            --username "forthebux" \
+            --weekly-only \
+            --days 8 \
+            --weekly-output forthebux_weekly_digest.md
+
+      - name: Generate digest for JimCollinson
+        run: |
+          python3 discord_digest_enhanced.py \
+            --exports discord_exports \
+            --username "jimcollinson" \
+            --weekly-only \
+            --days 8 \
+            --weekly-output jimcollinson_weekly_digest.md
+
+      - name: Commit digest outputs to repo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -f \
+            dirvine_weekly_digest.md \
+            forthebux_weekly_digest.md \
+            jimcollinson_weekly_digest.md
+          git diff --staged --quiet || git commit -m "Update weekly digests for week ending $(date '+%Y-%m-%d')"
+          git push
 
       - name: Upload digests as artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: dirvine-digests-${{ github.run_number }}
+          name: weekly-digests-${{ github.run_number }}
           path: |
-            dirvine_complete_archive.md
-            dirvine_complete_archive.html
-            dirvine_digest.json
             dirvine_weekly_digest.md
+            forthebux_weekly_digest.md
+            jimcollinson_weekly_digest.md
           retention-days: 90
